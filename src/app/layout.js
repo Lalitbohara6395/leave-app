@@ -1,4 +1,5 @@
 import "./globals.css"; // Import our global CSS file so Tailwind works on every page
+import Providers from "./provider";
 
 export const metadata = { // Define metadata for SEO (Search Engine Optimization)
   title: "To-Do App", // Set the title that appears in the browser tab
@@ -7,6 +8,7 @@ export const metadata = { // Define metadata for SEO (Search Engine Optimization
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en"><body className="antialiased">{children}</body></html>
+    <html lang="en"><body className="antialiased">
+      <Providers>{children}</Providers></body></html>
   );
 }

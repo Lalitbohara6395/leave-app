@@ -1,80 +1,83 @@
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Contact from "@/models/Contact";
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/postgres';
 
-export async function DELETE(request, { params }) {
-  await dbConnect();
-
-  //const resolvedParams = await params;   
-  const { id } = await params;
-
-  if (!id) {
-    return NextResponse.json({ success: false, message: "ID missing" }, { status: 400 });
-  }
-
+// ================= DELETE =================
+export async function DELETE(request, context) {
   try {
-    const deleted = await Contact.findByIdAndDelete(id);
+    const pool = await dbConnect();
 
-    if (!deleted) {
-      return NextResponse.json({ success: false, message: "Message not found" }, { status: 404 });
-    }
+    const { id } = await context.params;
+    const contactId = Number(id);
 
-    return NextResponse.json({ success: true, message: "Deleted successfully" });
-  } catch (err) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
-  }
-}
-
-export async function PUT(request, { params }) {
-  await dbConnect();
-
-  const { id } = await params;
-
-  if (!id) {
-    return NextResponse.json(
-      { success: false, message: "ID missing" },
-      { status: 400 }
-    );
-  }
-
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Invalid JSON body" },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const updated = await Contact.findByIdAndUpdate(
-      id,
-      {
-        name: body.name,
-        email: body.email,
-        message: body.message,
-      },
-      { new: true }
+    const result = await pool.query(
+      'DELETE FROM contact WHERE id = $1 RETURNING *',
+      [contactId]
     );
 
-    if (!updated) {
-      return NextResponse.json(
-        { success: false, message: "Message not found" },
-        { status: 404 }
-      );
+    if (result.rowCount === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Not found',
+      });
     }
 
     return NextResponse.json({
       success: true,
-      message: "Updated successfully",
-      data: updated,
+      data: result.rows[0],
     });
 
-  } catch (err) {
+  } catch (error) {
     return NextResponse.json(
-      { success: false, error: err.message },
-      { status: 500 }
+      { success: false, error: error.message },
+      { status: 400 }
+    );
+  }
+}
+
+// ================= UPDATE =================
+export async function PUT(request, context) {
+  try {
+    const pool = await dbConnect();
+
+    const { id } = await context.params;
+    const contactId = Number(id);
+
+    const body = await request.json();
+
+    const result = await pool.query(
+      `UPDATE contact 
+       SET 
+         name = COALESCE($1, name),
+         email = COALESCE($2, email),
+         message = COALESCE($3, message)
+       WHERE id = $4
+       RETURNING *`,
+      [
+        body.name ?? null,
+        body.email ?? null,
+        body.message ?? null,
+        contactId,
+      ]
+    );
+
+    console.log("UPDATED:", result.rows[0]); // debug
+
+    if (result.rowCount === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Update failed',
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: result.rows[0],
+    });
+
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 400 }
     );
   }
 }

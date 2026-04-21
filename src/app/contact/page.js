@@ -1,16 +1,16 @@
 "use client";
-import React from 'react'
-import Link from 'next/link'
-import { useState } from 'react'
+
+import { useState } from "react";
+import Link from "next/link";
 
 export default function Page() {
-    
-
     const [form, setForm] = useState({
         name: "",
         email: "",
         message: ""
     });
+
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         setForm({
@@ -22,29 +22,47 @@ export default function Page() {
     const handleOnSubmit = async (e) => {
         e.preventDefault();
 
-        const res = await fetch("/api/contact", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(form)
-        });
+        // Basic validation
+        if (!form.name || !form.email || !form.message) {
+            alert("Please fill all fields");
+            return;
+        }
 
-        const data = await res.json();
+        const emailRegex = /\S+@\S+\.\S+/;
+        if (!emailRegex.test(form.email)) {
+            alert("Invalid email");
+            return;
+        }
 
-        if (data.success) {
-            alert("Message Saved ✅");
-            setForm({ name: "", email: "", message: "" });
-        } else {
-            alert("Error ❌");
+        setLoading(true);
+
+        try {
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(form)
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert("Message Saved ✅");
+                setForm({ name: "", email: "", message: "" });
+            } else {
+                alert("Error ❌");
+            }
+        } catch (error) {
+            console.log(error);
+            alert("Network Error ❌");
+        } finally {
+            setLoading(false);
         }
     };
 
-
-
     return (
         <div className='min-h-screen flex justify-center items-center bg-gray-100'>
-
             <div className='w-full max-w-md p-8 bg-white rounded-2xl shadow-xl'>
 
                 <h1 className='text-3xl font-semibold text-center mb-3'>
@@ -101,16 +119,21 @@ export default function Page() {
 
                     <button
                         type="submit"
-                        className='w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition duration-200'
+                        disabled={loading}
+                        className='w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 disabled:opacity-50'
                     >
-                        Submit
+                        {loading ? "Sending..." : "Submit"}
                     </button>
 
                 </form>
-                <Link href="/" className="mt-10 bg-slate-800 text-white px-6 py-3 rounded-full hover:bg-slate-700 transition font-semibold flex items-center justify-center ">
-                    Back 
+
+                <Link
+                    href="/"
+                    className="mt-10 bg-slate-800 text-white px-6 py-3 rounded-full hover:bg-slate-700 transition font-semibold flex items-center justify-center"
+                >
+                    Back
                 </Link>
             </div>
         </div>
-    )
+    );
 }
