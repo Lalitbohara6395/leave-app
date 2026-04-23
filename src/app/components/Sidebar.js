@@ -28,6 +28,12 @@ export default function Sidebar() {
           href="/leave"
           active={pathname === "/leave"}
         />
+                <SidebarItem
+          icon={<CalendarCheck size={18} />}
+          text="Pending Application"
+          href="/pending-application"
+          active={pathname === "/pending-application"}
+        />
       </div>
 
     </div>
