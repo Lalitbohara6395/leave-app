@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import keycloak from "@/lib/keyclock"; // 
+import keycloak from "../lib/keycloak"; // 
 
 export default function Providers({ children }) {
   const [ready, setReady] = useState(false);
@@ -13,27 +13,32 @@ export default function Providers({ children }) {
       onLoad: "check-sso",
       checkLoginIframe: false,
     })
-    .then((authenticated) => {
+      .then((authenticated) => {
 
-      if (!authenticated && window.location.pathname !== "/login") {
-        window.location.href = "/login";
-        return;
-      }
+        if (!authenticated && window.location.pathname !== "/login") {
+          window.location.href = "/login";
+          return;
+        }
 
-      if (authenticated && window.location.pathname === "/login") {
-        window.location.href = "/";
-        return;
-      }
+        if (authenticated && window.location.pathname === "/login") {
+          window.location.href = "/";
+          return;
+        }
 
-      setReady(true);
-      setStatus("ready");
-    })
-    .catch(() => {
-      setStatus("error");
-    })
-    .finally(() => {
-      setInitDone(true); 
-    });
+        if (authenticated) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+
+        setReady(true);
+        setStatus("ready");
+      })
+      .catch(() => {
+        setStatus("error");
+      })
+      .finally(() => {
+        setInitDone(true);
+      });
 
     // session end hone se 30 second pahle token refresh kar deta hai
     const interval = setInterval(() => {
@@ -47,7 +52,7 @@ export default function Providers({ children }) {
     return () => clearInterval(interval);
   }, []);
 
-  
+
   if (!initDone) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600 to-blue-600 text-white">
