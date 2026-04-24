@@ -31,8 +31,8 @@ export default function Sidebar() {
                 <SidebarItem
           icon={<CalendarCheck size={18} />}
           text="Pending Application"
-          href="/pending-application"
-          active={pathname === "/pending-application"}
+          href="/pending-applications"
+          active={pathname === "/pending-applications"}
         />
       </div>
 
